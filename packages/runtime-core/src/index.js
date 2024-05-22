@@ -1,0 +1,1 @@
+export { registerRuntimeCompiler, isRuntimeOnly } from './component'
