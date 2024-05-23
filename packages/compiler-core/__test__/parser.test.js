@@ -1,8 +1,9 @@
-import { tokenizer,NodeTypes,createExp,ConstantTypes } from '../src/tokenizer'
+import { NodeTypes } from '../src/ats'
+import { baseParse, ConstantTypes } from '../src/parser'
 import { expect, test } from 'vitest'
 
 test('文本内容', () => {
-    const ast = tokenizer('文本内容')
+    const ast = baseParse('文本内容')
     const text = ast.children[0]
     console.log(text, 'text');
     expect(text).toStrictEqual({
@@ -12,7 +13,7 @@ test('文本内容', () => {
 })
 
 test('插值文本内容', () => {
-    const ast = tokenizer('文本 {{ message }} 内容')
+    const ast = baseParse('文本 {{ message }} 内容')
     const text1 = ast.children[0]
     const interpolation = ast.children[1]
     const text2 = ast.children[2]
@@ -37,7 +38,7 @@ test('插值文本内容', () => {
 })
 
 test('普通标签', () => {
-    const ast = tokenizer('<div></div>')
+    const ast = baseParse('<div></div>')
     const element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -48,10 +49,11 @@ test('普通标签', () => {
 })
 
 test('自闭合标签', () => {
-    const ast = tokenizer('<input/>')
+    const ast = baseParse('<input/>')
     const element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
+        isSelfClosing: true,
         tag: 'input',
         props: [],
         children: []
@@ -59,7 +61,7 @@ test('自闭合标签', () => {
 })
 
 test('标签层级', () => {
-    const ast = tokenizer('<div>div文本  <input/></div>')
+    const ast = baseParse('<div>div文本  <input/></div>')
     const element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -70,6 +72,7 @@ test('标签层级', () => {
             content: 'div文本  '
         },{
             type: NodeTypes.ELEMENT,
+            isSelfClosing: true,
             tag: 'input',
             props: [],
             children: []
@@ -78,7 +81,7 @@ test('标签层级', () => {
 })
 
 test('标签 + 普通属性(单引号+双引号)', () => {
-    let ast = tokenizer('<div id="foo"></div>')
+    let ast = baseParse('<div id="foo"></div>')
     let element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -93,7 +96,7 @@ test('标签 + 普通属性(单引号+双引号)', () => {
           }],
         children: []
     })
-    ast = tokenizer("<div id='foo'></div>")
+    ast = baseParse("<div id='foo'></div>")
     element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -111,7 +114,7 @@ test('标签 + 普通属性(单引号+双引号)', () => {
 })
 
 test('标签 + v-指令', () => {
-    const ast = tokenizer('<div v-bind:id="foo"></div>')
+    const ast = baseParse('<div v-bind:id="foo"></div>')
     const element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -141,7 +144,7 @@ test('标签 + v-指令', () => {
 })
 
 test('标签 + v-指令 + 修饰符', () => {
-    const ast = tokenizer('<div v-on:click.stop="click"></div>')
+    const ast = baseParse('<div v-on:click.stop="click"></div>')
     const element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -171,7 +174,7 @@ test('标签 + v-指令 + 修饰符', () => {
 })
 
 test('标签 + v-指令 + 多个修饰符', () => {
-    const ast = tokenizer('<div v-on:click.stop.prevent="click"></div>')
+    const ast = baseParse('<div v-on:click.stop.prevent="click"></div>')
     const element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -201,7 +204,7 @@ test('标签 + v-指令 + 多个修饰符', () => {
 })
 
 test('标签 + v- + 动态指令', () => {
-    const ast = tokenizer('<div v-on:[event]="foo"></div>')
+    const ast = baseParse('<div v-on:[event]="foo"></div>')
     const element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -231,7 +234,7 @@ test('标签 + v- + 动态指令', () => {
 })
 
 test('标签 + 指令简写', () => {
-    let ast = tokenizer('<div :id="foo"></div>')
+    let ast = baseParse('<div :id="foo"></div>')
     let element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -258,7 +261,7 @@ test('标签 + 指令简写', () => {
         }],
         children: []
     })
-    ast = tokenizer('<div @click="click"></div>')
+    ast = baseParse('<div @click="click"></div>')
     element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -285,7 +288,7 @@ test('标签 + 指令简写', () => {
         }],
         children: []
     })
-    ast = tokenizer('<div .id="foo"></div>')
+    ast = baseParse('<div .id="foo"></div>')
     element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -315,7 +318,7 @@ test('标签 + 指令简写', () => {
 })
 
 test('标签 + v-for', () => {
-    let ast = tokenizer('<div v-for="item in items"></div>')
+    let ast = baseParse('<div v-for="item in items"></div>')
     let element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -356,7 +359,7 @@ test('标签 + v-for', () => {
         children: []
     })
 
-    ast = tokenizer('<div v-for="(value, key) in maps"></div>')
+    ast = baseParse('<div v-for="(value, key) in maps"></div>')
     element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
@@ -403,7 +406,7 @@ test('标签 + v-for', () => {
         children: []
     })
 
-    ast = tokenizer('<div v-for="(value, key, idx) in object"></div>')
+    ast = baseParse('<div v-for="(value, key, idx) in object"></div>')
     element = ast.children[0]
     expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
