@@ -37,8 +37,6 @@ export function createRoot(children, source) {
         type: NodeTypes.ROOT,
         children,
         source,
-        source,
-        children,
         helpers: new Set(),
         components: [],
         directives: [],
